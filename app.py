@@ -636,6 +636,19 @@ if train_clicked:
         best_model_path = MODEL_DIR / "best_house_price_model.joblib"
         joblib.dump(best_pipeline, best_model_path)
 
+        # Save model metadata for persistence after app restart
+        metadata = {
+            "best_model_name": best_model_name,
+            "model_file": str(best_model_path.relative_to(PROJECT_ROOT)),
+            "feature_columns": list(X_valid.columns),
+            "target_column": target_column
+            }
+
+        metadata_path = MODEL_DIR / "best_model_metadata.json"
+
+        with open(metadata_path, "w", encoding="utf-8") as file:
+            json.dump(metadata, file, indent=4)
+
         st.session_state["training_results"] = results_df
         st.session_state["trained_models"] = trained_models
         st.session_state["validation_actual"] = np.asarray(
@@ -915,14 +928,42 @@ if "training_results" in st.session_state:
 
 st.header("11. House Price Prediction Interface")
 
+# Load saved model metadata from disk
+metadata_path = MODEL_DIR / "best_model_metadata.json"
+
+saved_model_path = None
+saved_feature_columns = None
+
+if metadata_path.exists():
+    try:
+        with open(metadata_path, "r", encoding="utf-8") as file:
+            saved_metadata = json.load(file)
+
+        model_file = Path(saved_metadata["model_file"])
+
+        if not model_file.is_absolute():
+            model_file = PROJECT_ROOT / model_file
+
+        saved_model_path = model_file
+        saved_feature_columns = saved_metadata["feature_columns"]
+
+        if not isinstance(saved_feature_columns, list):
+            raise ValueError("Invalid feature-column metadata.")
+
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        st.error(f"Unable to load saved model metadata: {error}")
+        saved_model_path = None
+        saved_feature_columns = None
+
 st.write(
     "Upload a CSV file containing house features to generate "
     "predictions using the saved best-performing model."
 )
 
 if (
-    "best_model_path" in st.session_state
-    and "feature_columns" in st.session_state
+    saved_model_path is not None
+    and saved_feature_columns is not None
+    and saved_model_path.is_file()
 ):
 
     uploaded_prediction_file = st.file_uploader(
@@ -938,7 +979,7 @@ if (
         st.subheader("Uploaded Dataset Preview")
         st.dataframe(prediction_df.head())
 
-        expected_columns = st.session_state["feature_columns"]
+        expected_columns = saved_feature_columns
 
         # Remove common ID columns if present
         prediction_input = prediction_df.drop(
@@ -974,9 +1015,7 @@ if (
 
             if st.button("Generate House Price Predictions"):
 
-                best_pipeline = joblib.load(
-                    st.session_state["best_model_path"]
-                )
+                best_pipeline = joblib.load(saved_model_path)
 
                 predictions = best_pipeline.predict(
                     prediction_input
