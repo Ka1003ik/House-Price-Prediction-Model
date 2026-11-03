@@ -37,8 +37,7 @@ def prepare_prediction_features(
     id_column="Id"
 ):
     """
-    Validate and align incoming features with the
-    feature schema stored in the fitted preprocessing pipeline.
+    Validate and align incoming features with the schema used during model training.
     """
 
     if not isinstance(data, pd.DataFrame):
@@ -46,61 +45,42 @@ def prepare_prediction_features(
             "Input data must be a pandas DataFrame."
         )
 
-    # Find the original training feature names.
-    # Our model contains a nested preprocessing pipeline.
     expected_columns = None
 
-    # Option 1: Explicit schema saved with the model.
     if hasattr(pipeline, "feature_columns_"):
-        expected_columns = pipeline.feature_columns_
+        expected_columns = list(pipeline.feature_columns_)
 
-    # Option 2: Retrieve schema from the nested ColumnTransformer.
+    if expected_columns is None and hasattr(pipeline, "feature_names_in_"):
+        expected_columns = list(pipeline.feature_names_in_)
+
     if expected_columns is None and hasattr(pipeline, "named_steps"):
-
-        if "preprocessor" in pipeline.named_steps:
-
-            fitted_preprocessor = (
-                pipeline.named_steps["preprocessor"]
-            )
-
-            if (
-                hasattr(fitted_preprocessor, "named_steps")
-                and "column_preprocessor"
-                in fitted_preprocessor.named_steps
-            ):
-
-                column_preprocessor = (
-                    fitted_preprocessor
-                    .named_steps["column_preprocessor"]
+        preprocessor = pipeline.named_steps.get("preprocessor")
+        if preprocessor is not None:
+            if hasattr(preprocessor, "feature_names_in_"):
+                expected_columns = list(preprocessor.feature_names_in_)
+            elif hasattr(preprocessor, "named_steps"):
+                nested_preprocessor = preprocessor.named_steps.get(
+                    "column_preprocessor"
                 )
-
-                if hasattr(
-                    column_preprocessor,
-                    "feature_names_in_"
+                if nested_preprocessor is not None and hasattr(
+                    nested_preprocessor, "feature_names_in_"
                 ):
-                    expected_columns = (
-                        column_preprocessor.feature_names_in_
-                    )
+                    expected_columns = list(nested_preprocessor.feature_names_in_)
 
-    # Option 3: Fall back to the outer pipeline schema.
-    if expected_columns is None:
-        if hasattr(pipeline, "feature_names_in_"):
-            expected_columns = pipeline.feature_names_in_
+    if expected_columns is None and hasattr(pipeline, "named_steps"):
+        preprocessor = pipeline.named_steps.get("preprocessor")
+        if preprocessor is not None and hasattr(preprocessor, "transformers_"):
+            expected_columns = []
+            for _, _, transformer_columns in preprocessor.transformers_:
+                expected_columns.extend(list(transformer_columns))
 
     if expected_columns is None:
         raise ValueError(
             "Unable to retrieve the fitted model's input feature schema."
         )
 
-    expected_columns = list(expected_columns)
+    features = data.drop(columns=[id_column], errors="ignore").copy()
 
-    # Remove identifier column.
-    features = data.drop(
-        columns=[id_column],
-        errors="ignore"
-    ).copy()
-
-    # Check missing and unexpected columns.
     missing_columns = [
         col for col in expected_columns
         if col not in features.columns
@@ -120,82 +100,36 @@ def prepare_prediction_features(
 
     features = features[expected_columns]
 
-# ------------------------------------------------
-# SAFETY CHECK: ENFORCE TRAINED NUMERICAL SCHEMA
-# ------------------------------------------------
-
-# Retrieve the fitted numerical feature list
-# from the trained ColumnTransformer.
-    inner_pipeline = pipeline.named_steps.get("preprocessor")
-
-    if inner_pipeline is None:
-        raise ValueError(
-            "Trained pipeline does not contain a preprocessor."
-        )
-    column_preprocessor = (
-        inner_pipeline.named_steps.get("column_preprocessor")
-        )
-    
-    if column_preprocessor is None:
-        raise ValueError(
-        "ColumnTransformer not found in fitted pipeline."
-        )
     numeric_columns = []
+    preprocessor = None
 
-    for name, transformer, columns in column_preprocessor.transformers_:
-         if name == "numerical":
-            numeric_columns.extend(list(columns))
+    if hasattr(pipeline, "named_steps"):
+        preprocessor = pipeline.named_steps.get("preprocessor")
 
-# Convert test values to numeric types.
-# Unexpected text such as "NA" becomes NaN.
-# The fitted median imputer handles those values.
-    for column in numeric_columns:
-        features[column] = pd.to_numeric(
-            features[column],
-            errors="coerce"
+    if preprocessor is not None:
+        if hasattr(preprocessor, "transformers_"):
+            for name, _, transformer_columns in preprocessor.transformers_:
+                if name == "numerical":
+                    numeric_columns.extend(list(transformer_columns))
+        elif hasattr(preprocessor, "named_steps"):
+            nested_preprocessor = preprocessor.named_steps.get(
+                "column_preprocessor"
             )
+            if nested_preprocessor is not None and hasattr(
+                nested_preprocessor, "transformers_"
+            ):
+                for name, _, transformer_columns in nested_preprocessor.transformers_:
+                    if name == "numerical":
+                        numeric_columns.extend(list(transformer_columns))
+
+    for column in numeric_columns:
+        if column in features.columns:
+            features[column] = pd.to_numeric(
+                features[column],
+                errors="coerce"
+            )
+
     return features
-
-
-    """
-    Remove the identifier and align incoming features
-    with the exact schema used during model training.
-    """
-
-    if not isinstance(data, pd.DataFrame):
-        raise TypeError("Input data must be a pandas DataFrame.")
-
-    if not hasattr(pipeline, "feature_names_in_"):
-        raise ValueError(
-            "The fitted pipeline does not contain its input schema."
-        )
-
-    features = data.drop(
-        columns=[id_column],
-        errors="ignore"
-    ).copy()
-
-    expected_columns = list(pipeline.feature_names_in_)
-
-    missing_columns = [
-        col for col in expected_columns
-        if col not in features.columns
-    ]
-
-    unexpected_columns = [
-        col for col in features.columns
-        if col not in expected_columns
-    ]
-
-    if missing_columns or unexpected_columns:
-        raise ValueError(
-            "Input feature schema does not match the trained model.\n"
-            f"Missing columns: {missing_columns}\n"
-            f"Unexpected columns: {unexpected_columns}"
-        )
-
-    # Ensure columns have the same order as training.
-    return features[expected_columns]
 
 
 # ============================================================
