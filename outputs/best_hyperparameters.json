@@ -1,0 +1,21 @@
+{
+    "Decision Tree Regression": {
+        "Best_CV_RMSE": 38066.92780378427,
+        "Best_Parameters": {
+            "model__min_samples_split": 5,
+            "model__min_samples_leaf": 8,
+            "model__max_features": null,
+            "model__max_depth": 8
+        }
+    },
+    "Random Forest Regression": {
+        "Best_CV_RMSE": 30149.12137873106,
+        "Best_Parameters": {
+            "model__n_estimators": 250,
+            "model__min_samples_split": 5,
+            "model__min_samples_leaf": 2,
+            "model__max_features": 0.7,
+            "model__max_depth": 25
+        }
+    }
+}

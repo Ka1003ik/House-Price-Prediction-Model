@@ -1,0 +1,7 @@
+Feature,Importance
+numerical__X3 distance to the nearest MRT station,0.5673105124925845
+numerical__X2 house age,0.17314021309109617
+numerical__X5 latitude,0.11779798476877011
+numerical__X6 longitude,0.07185827763791186
+numerical__X1 transaction date,0.04523523788525727
+numerical__X4 number of convenience stores,0.024657774124380246
