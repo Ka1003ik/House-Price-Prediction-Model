@@ -20,6 +20,10 @@ from src.generic_pipeline import (
     prepare_features_target,
 )
 
+from src.explainability import (
+    calculate_permutation_importance,
+    calculate_shap_values
+)
 
 # ==================================================
 # HELPER FUNCTIONS
@@ -118,6 +122,8 @@ def clear_training_state():
         "best_model_path",
         "_training_config_signature",
         "actual_predicted_model",
+        "feature_importance",
+        "shap_values",
     ]
     for key in keys_to_clear:
         st.session_state.pop(key, None)
@@ -922,11 +928,179 @@ if "training_results" in st.session_state:
             mime="text/csv",
         )
 
+
 # ============================================================
-# 11. HOUSE PRICE PREDICTION INTERFACE
+# 11. MODEL EXPLAINABILITY - FEATURE IMPORTANCE
 # ============================================================
 
-st.header("11. House Price Prediction Interface")
+if "training_results" in st.session_state:
+    st.header("11. Model Explainability")
+
+    st.subheader("11.1 Global Feature Importance")
+
+    st.write(
+        "Identify which original house features have "
+        "the greatest influence on model performance."
+    )
+
+    best_model_name = st.session_state["best_model_name"]
+
+    best_pipeline = st.session_state["trained_models"][
+        best_model_name
+    ]["pipeline"]
+
+    X_valid = st.session_state["validation_features"]
+    y_valid = st.session_state["validation_actual"]
+
+    if st.button("Calculate Feature Importance"):
+
+        with st.spinner("Calculating feature importance..."):
+
+            try:
+                importance_df = calculate_permutation_importance(
+                    pipeline=best_pipeline,
+                    X_valid=X_valid,
+                    y_valid=y_valid,
+                    n_repeats=5,
+                    random_state=42
+                )
+
+                st.session_state["feature_importance"] = importance_df
+
+                st.success("Feature importance calculated successfully!")
+
+            except Exception as error:
+                st.error(f"Feature importance calculation failed: {error}")
+
+    if "feature_importance" in st.session_state:
+
+        importance_df = st.session_state["feature_importance"]
+
+        st.subheader("Feature Importance Ranking")
+
+        st.dataframe(
+            importance_df.round(3),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.subheader("Top 15 Important Features")
+
+        top_features = importance_df.head(15).sort_values(
+            "Importance_Mean",
+            ascending=True
+        )
+
+        st.bar_chart(
+            top_features.set_index("Feature")["Importance_Mean"]
+        )
+
+
+    # --------------------------------------------------------
+    # 11.2 SHAP EXPLAINABILITY
+    # --------------------------------------------------------
+
+    st.subheader("11.2 SHAP Explainability")
+
+    st.write(
+        "Understand how individual features contribute "
+        "to the model's house-price predictions."
+    )
+
+    if st.button("Calculate SHAP Explanations"):
+
+        with st.spinner("Calculating SHAP values..."):
+
+            try:
+                shap_values = calculate_shap_values(
+                    pipeline=best_pipeline,
+                    X_background=X_valid,
+                    X_explain=X_valid
+                )
+
+                st.session_state["shap_values"] = shap_values
+
+                st.success("SHAP explanations calculated successfully!")
+
+            except Exception as error:
+                st.error(f"SHAP calculation failed: {error}")
+
+    if "shap_values" in st.session_state:
+
+        shap_values = st.session_state["shap_values"]
+
+        # Global SHAP importance
+        st.markdown("#### Global SHAP Feature Importance")
+
+        shap_importance = pd.DataFrame({
+            "Feature": shap_values.feature_names,
+            "Mean_Absolute_SHAP": np.abs(
+                shap_values.values
+            ).mean(axis=0)
+        })
+
+        shap_importance = shap_importance.sort_values(
+            by="Mean_Absolute_SHAP",
+            ascending=False
+        ).reset_index(drop=True)
+
+        st.dataframe(
+            shap_importance.head(15).round(3),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.bar_chart(
+            shap_importance.head(15)
+            .sort_values("Mean_Absolute_SHAP")
+            .set_index("Feature")["Mean_Absolute_SHAP"]
+        )
+
+        # Individual prediction explanation
+        st.markdown("#### Individual House Prediction Explanation")
+
+        selected_row = st.selectbox(
+            "Select a house record to explain",
+            options=list(range(len(shap_values.values))),
+            format_func=lambda x: f"House Record {x + 1}"
+        )
+
+        local_explanation = pd.DataFrame({
+            "Feature": shap_values.feature_names,
+            "SHAP_Value": shap_values.values[selected_row]
+        })
+
+        local_explanation["Absolute_SHAP"] = (
+            local_explanation["SHAP_Value"].abs()
+        )
+
+        local_explanation = local_explanation.sort_values(
+            by="Absolute_SHAP",
+            ascending=False
+        ).head(15)
+
+        st.write(
+            "Positive SHAP values push the prediction higher; "
+            "negative values push it lower."
+        )
+
+        st.dataframe(
+            local_explanation.round(3),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.bar_chart(
+            local_explanation
+            .sort_values("SHAP_Value")
+            .set_index("Feature")["SHAP_Value"]
+        )
+
+# ============================================================
+# 12. HOUSE PRICE PREDICTION INTERFACE
+# ============================================================
+
+st.header("12. House Price Prediction Interface")
 
 # Load saved model metadata from disk
 metadata_path = MODEL_DIR / "best_model_metadata.json"
