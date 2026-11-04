@@ -124,9 +124,36 @@ def prepare_prediction_features(
 
     for column in numeric_columns:
         if column in features.columns:
-            features[column] = pd.to_numeric(
-                features[column],
+            original_values = features[column]
+
+            converted_values = pd.to_numeric(
+                original_values,
                 errors="coerce"
+            )
+
+            invalid_mask = (
+                original_values.notna()
+                & converted_values.isna()
+            )
+
+            if invalid_mask.any():
+                invalid_examples = (
+                    original_values.loc[invalid_mask]
+                    .astype(str)
+                    .unique()[:5]
+                    .tolist()
+                )
+
+                raise ValueError(
+                    f"Column '{column}' contains invalid numeric values: "
+                    f"{invalid_examples}. "
+                    "Provide valid numbers or leave missing values blank."
+                )
+
+            # Match training behaviour: treat infinite values as missing.
+            features[column] = converted_values.replace(
+                [np.inf, -np.inf],
+                np.nan
             )
 
     return features

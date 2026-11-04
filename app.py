@@ -25,6 +25,11 @@ from src.explainability import (
     calculate_shap_values
 )
 
+from src.prediction import (
+    load_prediction_pipeline,
+    predict_house_prices,
+)
+
 # ==================================================
 # HELPER FUNCTIONS
 # ==================================================
@@ -1148,82 +1153,79 @@ if (
 
     if uploaded_prediction_file is not None:
 
-        prediction_df = pd.read_csv(uploaded_prediction_file)
+        try:
+            prediction_df = pd.read_csv(uploaded_prediction_file)
 
-        st.subheader("Uploaded Dataset Preview")
-        st.dataframe(prediction_df.head())
+            if prediction_df.empty:
+                st.error("The uploaded prediction dataset is empty.")
 
-        expected_columns = saved_feature_columns
+            elif not prediction_df.columns.is_unique:
+                st.error("Dataset contains duplicate column names.")
 
-        # Remove common ID columns if present
-        prediction_input = prediction_df.drop(
-            columns=["Id"],
-            errors="ignore"
-        )
-
-        missing_columns = [
-            col for col in expected_columns
-            if col not in prediction_input.columns
-        ]
-
-        extra_columns = [
-            col for col in prediction_input.columns
-            if col not in expected_columns
-        ]
-
-        if missing_columns:
-
-            st.error(
-                f"Missing required columns: {missing_columns}"
-            )
-
-        elif extra_columns:
-
-            st.warning(
-                f"Extra columns will be ignored: {extra_columns}"
-            )
-
-        else:
-
-            prediction_input = prediction_input[expected_columns]
-
-            if st.button("Generate House Price Predictions"):
-
-                best_pipeline = joblib.load(saved_model_path)
-
-                predictions = best_pipeline.predict(
-                    prediction_input
-                )
-
-                prediction_results = prediction_df.copy().reset_index(drop=True)
-
-                prediction_results["Predicted_House_Price"] = (
-                    predictions
-                )
-
-                st.success("Predictions generated successfully!")
-
-                st.subheader("Prediction Results")
-
+            else:
+                st.subheader("Uploaded Dataset Preview")
                 st.dataframe(
-                    prediction_results,
+                    prediction_df.head(),
                     use_container_width=True
                 )
 
-                st.metric(
-                    "Average Predicted House Price",
-                    f"{np.mean(predictions):,.2f}"
-                )
+                if st.button("Generate House Price Predictions"):
 
-                csv_output = prediction_results.to_csv(index=False)
+                    try:
+                        best_pipeline = load_prediction_pipeline(
+                            saved_model_path
+                        )
 
-                st.download_button(
-                    label="Download House Price Predictions",
-                    data=csv_output,
-                    file_name="house_price_predictions.csv",
-                    mime="text/csv"
-                )
+                        predictions = predict_house_prices(
+                            pipeline=best_pipeline,
+                            data=prediction_df,
+                            id_column="Id"
+                        )
 
+                        prediction_results = (
+                            prediction_df.copy().reset_index(drop=True)
+                        )
+
+                        prediction_results["Predicted_House_Price"] = (
+                            predictions
+                        )
+
+                        st.success(
+                            "Predictions generated successfully!"
+                        )
+
+                        st.subheader("Prediction Results")
+
+                        st.dataframe(
+                            prediction_results,
+                            use_container_width=True
+                        )
+
+                        st.metric(
+                            "Average Predicted House Price",
+                            f"{np.mean(predictions):,.2f}"
+                        )
+
+                        csv_output = prediction_results.to_csv(
+                            index=False
+                        )
+
+                        st.download_button(
+                            label="Download House Price Predictions",
+                            data=csv_output,
+                            file_name="house_price_predictions.csv",
+                            mime="text/csv"
+                        )
+
+                    except Exception as error:
+                        st.error(
+                            f"Prediction failed: {error}"
+                        )
+
+        except Exception as error:
+            st.error(
+                f"Unable to read prediction dataset: {error}"
+            )
 else:
 
     st.warning(

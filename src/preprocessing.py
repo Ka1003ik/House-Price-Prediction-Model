@@ -214,6 +214,21 @@ class NeighborhoodMedianImputer(
                 "Fit the imputer before transforming data."
             )
 
+        required_columns = [
+            self.target_col,
+            self.group_col
+        ]
+
+        missing_columns = [
+            col for col in required_columns
+            if col not in X.columns
+        ]
+
+        if missing_columns:
+            raise ValueError(
+                f"Missing required columns for imputation: {missing_columns}"
+            )
+
         result = X.copy()
 
         frontage = pd.to_numeric(
