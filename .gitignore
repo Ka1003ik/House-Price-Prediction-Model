@@ -10,3 +10,4 @@ __pycache__/
 Thumbs.db
 # Generated machine learning models
 models/*.joblib
+!models/best_house_price_model.joblib
