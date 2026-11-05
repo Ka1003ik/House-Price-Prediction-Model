@@ -1,198 +1,116 @@
 
-# Universal House Price Prediction System
+# House Price Prediction Model
 
-An end-to-end machine learning project for house price prediction, covering data preprocessing, model training, hyperparameter tuning, model explainability, and interactive predictions through a Streamlit web application.
+An end-to-end machine learning project for training, evaluating, explaining, and serving house-price regression models. The Streamlit application supports individual and bulk predictions using saved models, while the accompanying Python modules and notebooks provide reusable data-processing and modelling workflows.
 
-## Overview
+**Repository:** [github.com/Ka1003ik/House-Price-Prediction-Model](https://github.com/Ka1003ik/House-Price-Prediction-Model)
 
-The Universal House Price Prediction System is designed to develop and evaluate machine learning models for predicting residential property prices. It includes a reusable preprocessing and modelling pipeline, model evaluation utilities, explainability features, and an interactive application for generating predictions.
+## Features
 
-The project uses the Ames Housing dataset as its primary dataset and also includes a UCI Real Estate Valuation dataset for additional experimentation.
+- Data inspection, cleaning, preprocessing, missing-value handling, and categorical encoding.
+- Train and compare Linear Regression, Decision Tree, and Random Forest models.
+- Evaluate models with cross-validation and regression metrics (RMSE, MAE, MSE, and R²).
+- Tune model hyperparameters and inspect feature importance and SHAP explanations.
+- Generate individual predictions or upload CSV/Excel files for bulk predictions.
+- Validate prediction inputs against the saved model's feature schema.
+- Save trained pipelines and metadata for reuse between application sessions.
+- Work with the Ames Housing and UCI Real Estate Valuation datasets.
 
-## Key Features
+## Technologies
 
-- **Data Preprocessing:** Handles missing values, categorical variables, numerical features, and feature transformations.
-- **Model Training:** Supports multiple regression algorithms for house price prediction.
-- **Model Comparison:** Evaluates models using regression performance metrics.
-- **Hyperparameter Tuning:** Improves model performance through parameter optimization.
-- **Model Explainability:** Provides feature importance and SHAP-based explanations.
-- **Prediction Validation:** Validates prediction inputs and handles invalid numeric values.
-- **Interactive Web Application:** Uses Streamlit to provide an interface for exploring the system and generating predictions.
-- **Reusable Pipeline:** Separates preprocessing, training, tuning, prediction, and explainability into modular Python components.
+Python, Streamlit, pandas, NumPy, scikit-learn, SHAP, Matplotlib, Seaborn, Joblib, and OpenPyXL.
 
-## Technologies Used
+## Repository Structure
 
-| Category             | Technologies        |
-|----------------------|---------------------|
-| Programming Language | Python              |
-| Data Analysis        | Pandas, NumPy       |
-| Machine Learning     | Scikit-learn        |
-| Model Explainability | SHAP                |
-| Data Visualization   | Matplotlib, Seaborn |
-| Model Serialization  | Joblib              |
-| Web Application      | Streamlit           |
-| Excel Support        | OpenPyXL, xlrd      |
-
-## Project Structure
-
-```bash
+```text
 House-Price-Prediction-Model/
-│
-├── app.py
-├── requirements.txt
-├── README.md
+├── .streamlit/                 # Streamlit configuration
+├── app.py                      # Interactive Streamlit application
+├── dataset/                    # Ames and UCI datasets and descriptions
+├── models/                     # Saved model pipelines, metadata, and artifacts
+│   └── datasets/               # Dataset-specific model workspaces
+├── notebooks/                  # Numbered analysis and modelling workflows
+├── outputs/                    # Evaluation tables, predictions, and plots
+├── src/                        # Reusable preprocessing, modelling, and prediction code
 ├── .gitignore
-│
-├── .streamlit/
-│   └── config.toml
-│
-├── dataset/
-│   ├── train.csv
-│   ├── test.csv
-│   ├── data_description.txt
-│   ├── sample_submission.csv
-│   └── uci_real_estate/
-│       └── uci_prediction_input.xlsx
-│
-├── models/
-│   ├── active_model.json
-│   ├── best_house_price_model.joblib
-│   ├── best_model_metadata.json
-│   │
-│   └── datasets/
-│       └── real_estate_valuation_data_set_8bf54a2a2529/
-│           ├── best_house_price_model.joblib
-│           ├── best_model_metadata.json
-│           ├── decision_tree_streamlit.joblib
-│           ├── linear_regression_streamlit.joblib
-│           ├── random_forest_streamlit.joblib
-│           ├── target_display_config.json
-│           └── training_artifacts.joblib
-│
-├── notebooks/
-│   ├── 01_data_inspection.py
-│   ├── 02_exploratory_data_analysis.py
-│   ├── 03_missing_value_analysis.py
-│   ├── 04_data_preprocessing.py
-│   ├── 05_model_training.py
-│   ├── 06_hyperparameter_tuning.py
-│   ├── 07_model_evaluation.py
-│   ├── 08_final_model_and_prediction.py
-│   ├── 09_uci_data_inspection.py
-│   ├── 10_uci_generic_model.py
-│   └── 11_ames_generic_model.py
-│
-├── outputs/
-│   └── Evaluation metrics, charts, reports and prediction results
-│
-└── src/
-    ├── preprocessing.py
-    ├── generic_pipeline.py
-    ├── model_training.py
-    ├── model_tuning.py
-    ├── prediction.py
-    └── explainability.py
+├── README.md
+└── requirements.txt
 ```
 
-## Installation and Setup
+## Getting Started
 
-### 1. Open a terminal in the project directory
+### Clone the repository
 
-### 2. Create a virtual environment
+```bash
+git clone https://github.com/Ka1003ik/House-Price-Prediction-Model.git
+cd House-Price-Prediction-Model
+```
+
+### Create and activate a virtual environment
+
+Create the environment:
 
 ```bash
 python -m venv .venv
 ```
 
-### 3. Activate the virtual environment
-
-**Windows PowerShell:**
+Activate it in **Windows PowerShell**:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 4. Install dependencies
+Activate it in **Windows Command Prompt**:
 
-```bash
-python -m pip install -r requirements.txt
+```bat
+.venv\Scripts\activate.bat
 ```
 
-## Run the Application
+Activate it in **Linux or macOS**:
 
-Launch the Streamlit application using:
+```bash
+source .venv/bin/activate
+```
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Launch the application
 
 ```bash
 streamlit run app.py
 ```
 
-The application will open in your default browser. If it does not, use the local URL displayed in the terminal.
+Streamlit prints the local application URL in the terminal and normally opens it in your browser.
 
-## Prediction Workflows
+## Using the Application
 
-The Streamlit application supports two prediction modes using the
-previously saved machine learning pipeline.
+1. Upload a dataset containing a numeric target column.
+2. Select the target, any identifier columns to exclude, and the models to train.
+3. Configure the validation split and cross-validation settings, then train.
+4. Review the model comparison, validation metrics, and feature explanations.
+5. Use the saved model to predict an individual property or upload a CSV/Excel file for batch predictions.
 
-### Individual Property Prediction
-- Enter property feature values through an interactive form.
-- Generate a prediction for a single property.
-- View the input details and predicted value.
-- Download the individual prediction as a CSV file.
-
-### Bulk Property Prediction
-- Upload property datasets in CSV or Excel format.
-- Validate the uploaded dataset against the trained model's feature schema.
-- Generate predictions for multiple records.
-- View prediction summaries and distribution visualizations.
-- Download all prediction results as a CSV file.
-
-### Prediction Validation
-The application checks for missing required features before generating
-predictions and displays an informative validation message when the
-uploaded dataset is incompatible with the trained model.
-
-### Prediction Units
-Prediction labels and measurement units are derived from the saved
-model metadata. For the UCI Real Estate Valuation dataset, the target
-represents house price per unit area, measured in 10,000 TWD / Ping.
-
-## Model Evaluation
-
-The project uses standard regression evaluation metrics, including:
-
-- Mean Absolute Error (MAE)
-- Mean Squared Error (MSE)
-- Root Mean Squared Error (RMSE)
-- R-squared (R²)
-
-These metrics help evaluate prediction accuracy and compare different regression models.
+Prediction files must include the features required by the selected saved model. The application reports missing or incompatible columns before generating predictions. Target labels and units are read from the saved model metadata; for the UCI dataset, the target is house price per unit area in 10,000 TWD / Ping.
 
 ## Datasets
 
-**Ames Housing Dataset**
+- **Ames Housing:** Kaggle [House Prices: Advanced Regression Techniques](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data).
+- **Real Estate Valuation:** UCI [Real Estate Valuation Data Set](https://archive.ics.uci.edu/dataset/477/real+estate+valuation+data+set).
 
-The primary dataset is from the Kaggle House Prices: Advanced Regression Techniques competition.
+## Notes
 
-Dataset source: [Kaggle – House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data)
-
-**UCI Real Estate Valuation Dataset**
-
-An additional real estate valuation dataset is included for experimentation.
-
-Dataset source: [UCI – Real Estate Valuation](https://archive.ics.uci.edu/dataset/477/real+estate+valuation+data+set)
-
-## Project Objectives
-
-1. Develop a structured machine learning workflow for house price prediction.
-2. Implement reusable data preprocessing and model training pipelines.
-3. Compare and optimize regression models.
-4. Interpret model predictions using explainability techniques.
-5. Build an interactive application for practical prediction.
+- Model files are serialized with Joblib. Use compatible Python and scikit-learn versions when loading saved models; dependency versions are listed in `requirements.txt`.
+- Training a model in the application saves model files and metadata in the corresponding `models/` workspace.
+- Generated charts, metrics, and prediction outputs are stored in `outputs/` by the analysis workflows.
 
 ## Author
 
 **Kaushik K A**
 
-B.Tech – Artificial Intelligence and Data Science
+B.Tech, Artificial Intelligence and Data Science
 
 GitHub: [Ka1003ik](https://github.com/Ka1003ik)
