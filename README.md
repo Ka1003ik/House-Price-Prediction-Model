@@ -36,7 +36,7 @@ The project uses the Ames Housing dataset as its primary dataset and also includ
 ## Project Structure
 
 ```bash
-LEVEL_2_INTERMEDIATE/
+House-Price-Prediction-Model/
 │
 ├── app.py
 ├── requirements.txt
@@ -96,25 +96,15 @@ LEVEL_2_INTERMEDIATE/
 
 ## Installation and Setup
 
-### 1. Clone the repository
+### 1. Open a terminal in the project directory
 
-```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-```
-
-### 2. Navigate to the project directory
-
-```bash
-cd LEVEL_2_INTERMEDIATE
-```
-
-### 3. Create a virtual environment
+### 2. Create a virtual environment
 
 ```bash
 python -m venv .venv
 ```
 
-### 4. Activate the virtual environment
+### 3. Activate the virtual environment
 
 **Windows PowerShell:**
 
@@ -122,7 +112,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 5. Install dependencies
+### 4. Install dependencies
 
 ```bash
 python -m pip install -r requirements.txt
