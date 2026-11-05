@@ -6,12 +6,23 @@ __pycache__/
 .env.*
 !.env.example
 *.log
+*.tmp
+*.temp
+*.bak
+*.swp
 .DS_Store
 Thumbs.db
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Generated machine learning models
 models/*.joblib
 !models/best_house_price_model.joblib
+!models/linear_regression_streamlit.joblib
+!models/decision_tree_streamlit.joblib
+!models/random_forest_streamlit.joblib
+!models/training_artifacts.joblib
 
 # Local testing and backup files
 models_test_hold/
