@@ -128,6 +128,9 @@ def calculate_shap_values(
             feature_names=feature_names
         )
 
+        if max_evals is None:
+            return explainer(explain_transformed)
+
         return explainer(
             explain_transformed,
             max_evals=max_evals

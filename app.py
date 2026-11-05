@@ -1818,6 +1818,15 @@ if dataset_ready:
                     model_name=model_name,
                     categorical_columns=categorical_override,
                     random_state=int(random_state),
+                    target_transform=(
+                        "log"
+                        if (
+                            model_name == "linear_regression"
+                            and target_column == "SalePrice"
+                            and (y_train > 0).all()
+                        )
+                        else None
+                    ),
                 )
 
                 cv_scores = cross_val_score(

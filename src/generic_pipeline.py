@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -304,11 +304,13 @@ def build_generic_pipeline(
     model_name="random_forest",
     categorical_columns=None,
     model_params=None,
-    random_state=42
+    random_state=42,
+    target_transform=None
 ):
     """
     Combine automatic preprocessing and regression model.
 
+    Optionally transform a strictly positive target with a logarithm.
     The returned pipeline can be fitted, saved and reused.
     """
 
@@ -322,6 +324,17 @@ def build_generic_pipeline(
         random_state=random_state,
         model_params=model_params
     )
+
+    if target_transform == "log":
+        model = TransformedTargetRegressor(
+            regressor=model,
+            func=np.log,
+            inverse_func=np.exp,
+        )
+    elif target_transform is not None:
+        raise ValueError(
+            f"Unsupported target transform: {target_transform}"
+        )
 
     return Pipeline(
         steps=[
