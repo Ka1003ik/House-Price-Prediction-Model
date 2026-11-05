@@ -1,0 +1,6 @@
+{
+    "target_column": "Y house price of unit area",
+    "target_display_name": "House Price per Unit Area",
+    "target_unit": "10,000 TWD / Ping",
+    "training_dataset_name": "Real estate valuation data set.xlsx"
+}

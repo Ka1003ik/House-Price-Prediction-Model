@@ -8,6 +8,16 @@ __pycache__/
 *.log
 .DS_Store
 Thumbs.db
+
 # Generated machine learning models
 models/*.joblib
 !models/best_house_price_model.joblib
+
+# Local testing and backup files
+models_test_hold/
+app_backup_before_dataset_storage.py
+app_backup_before_recovery.py.py
+dataset/uci_invalid_test.xlsx
+
+# Archived Ames model backup
+models/ames_housing_backup/

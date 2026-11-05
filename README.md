@@ -35,7 +35,7 @@ The project uses the Ames Housing dataset as its primary dataset and also includ
 
 ## Project Structure
 
-```text
+```bash
 LEVEL_2_INTERMEDIATE/
 │
 ├── app.py
@@ -43,22 +43,47 @@ LEVEL_2_INTERMEDIATE/
 ├── README.md
 ├── .gitignore
 │
+├── .streamlit/
+│   └── config.toml
+│
 ├── dataset/
 │   ├── train.csv
 │   ├── test.csv
 │   ├── data_description.txt
 │   ├── sample_submission.csv
 │   └── uci_real_estate/
+│       └── uci_prediction_input.xlsx
 │
 ├── models/
+│   ├── active_model.json
 │   ├── best_house_price_model.joblib
-│   └── best_model_metadata.json
+│   ├── best_model_metadata.json
+│   │
+│   └── datasets/
+│       └── real_estate_valuation_data_set_8bf54a2a2529/
+│           ├── best_house_price_model.joblib
+│           ├── best_model_metadata.json
+│           ├── decision_tree_streamlit.joblib
+│           ├── linear_regression_streamlit.joblib
+│           ├── random_forest_streamlit.joblib
+│           ├── target_display_config.json
+│           └── training_artifacts.joblib
 │
 ├── notebooks/
-│   └── Data analysis and machine learning workflow scripts
+│   ├── 01_data_inspection.py
+│   ├── 02_exploratory_data_analysis.py
+│   ├── 03_missing_value_analysis.py
+│   ├── 04_data_preprocessing.py
+│   ├── 05_model_training.py
+│   ├── 06_hyperparameter_tuning.py
+│   ├── 07_model_evaluation.py
+│   ├── 08_final_model_and_prediction.py
+│   ├── 09_uci_data_inspection.py
+│   ├── 10_uci_generic_model.py
+│   └── 11_ames_generic_model.py
 │
 ├── outputs/
-│   └── Evaluation results, visualizations, and prediction files
+│   └── Evaluation metrics, charts, reports and prediction results
 │
 └── src/
     ├── preprocessing.py
@@ -112,6 +137,34 @@ streamlit run app.py
 ```
 
 The application will open in your default browser. If it does not, use the local URL displayed in the terminal.
+
+## Prediction Workflows
+
+The Streamlit application supports two prediction modes using the
+previously saved machine learning pipeline.
+
+### Individual Property Prediction
+- Enter property feature values through an interactive form.
+- Generate a prediction for a single property.
+- View the input details and predicted value.
+- Download the individual prediction as a CSV file.
+
+### Bulk Property Prediction
+- Upload property datasets in CSV or Excel format.
+- Validate the uploaded dataset against the trained model's feature schema.
+- Generate predictions for multiple records.
+- View prediction summaries and distribution visualizations.
+- Download all prediction results as a CSV file.
+
+### Prediction Validation
+The application checks for missing required features before generating
+predictions and displays an informative validation message when the
+uploaded dataset is incompatible with the trained model.
+
+### Prediction Units
+Prediction labels and measurement units are derived from the saved
+model metadata. For the UCI Real Estate Valuation dataset, the target
+represents house price per unit area, measured in 10,000 TWD / Ping.
 
 ## Model Evaluation
 

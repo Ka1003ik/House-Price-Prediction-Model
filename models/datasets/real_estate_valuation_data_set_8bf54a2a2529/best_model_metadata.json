@@ -1,0 +1,27 @@
+{
+    "best_model_name": "random_forest",
+    "model_file": "models\\datasets\\real_estate_valuation_data_set_8bf54a2a2529\\best_house_price_model.joblib",
+    "feature_columns": [
+        "X1 transaction date",
+        "X2 house age",
+        "X3 distance to the nearest MRT station",
+        "X4 number of convenience stores",
+        "X5 latitude",
+        "X6 longitude"
+    ],
+    "target_column": "Y house price of unit area",
+    "target_display_name": "House Price per Unit Area",
+    "target_unit": "10,000 TWD / Ping",
+    "categorical_columns": [],
+    "validation_percentage": 20.0,
+    "cv_folds": 5,
+    "random_state": 42,
+    "selected_models": [
+        "linear_regression",
+        "decision_tree",
+        "random_forest"
+    ],
+    "training_dataset_name": "Real estate valuation data set.xlsx",
+    "dataset_storage_key": "real_estate_valuation_data_set_8bf54a2a2529",
+    "dataset_signature": "597d72fcc6c0539e6035a033ddb387db48fff3fb1f3c98fee31fe081c64a9059"
+}
