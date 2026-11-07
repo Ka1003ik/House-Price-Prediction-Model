@@ -17,7 +17,11 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import (
+    cross_val_score,
+    train_test_split,
+    RandomizedSearchCV,
+)
 
 from src.generic_pipeline import (
     build_generic_pipeline,
@@ -2067,15 +2071,57 @@ if dataset_ready:
                     ),
                 )
 
-                cv_scores = cross_val_score(
-                    pipeline,
-                    X_train,
-                    y_train,
-                    cv=cv_folds,
-                    scoring="neg_root_mean_squared_error",
-                    n_jobs=1,
-                    error_score="raise",
-                )
+                if model_name in ("decision_tree", "random_forest"):
+
+                    if model_name == "decision_tree":
+                        param_distributions = {
+                            "model__max_depth": [None, 3, 5, 8, 12, 20],
+                            "model__min_samples_split": [2, 5, 10, 20],
+                            "model__min_samples_leaf": [1, 2, 4, 8],
+                            "model__max_features": [None, "sqrt", "log2"],
+                        }
+
+                    else:
+                        param_distributions = {
+                            "model__n_estimators": [200, 300, 500],
+                            "model__max_depth": [None, 10, 20, 30],
+                            "model__min_samples_split": [2, 5, 10],
+                            "model__min_samples_leaf": [1, 2, 4],
+                            "model__max_features": [1.0, "sqrt", "log2"],
+                        }
+
+                    search = RandomizedSearchCV(
+                        estimator=pipeline,
+                        param_distributions=param_distributions,
+                        n_iter=20,
+                        scoring="neg_root_mean_squared_error",
+                        cv=cv_folds,
+                        random_state=int(random_state),
+                        n_jobs=1,
+                        error_score="raise",
+                    )
+
+                    search.fit(X_train, y_train)
+
+                    pipeline = search.best_estimator_
+
+                    best_cv_index = search.best_index_
+                    cv_mean = -float(search.cv_results_["mean_test_score"][best_cv_index])
+                    cv_std = float(search.cv_results_["std_test_score"][best_cv_index])
+
+                else:
+                    cv_scores = cross_val_score(
+                        pipeline,
+                        X_train,
+                        y_train,
+                        cv=cv_folds,
+                        scoring="neg_root_mean_squared_error",
+                        n_jobs=1,
+                        error_score="raise",
+                    )
+
+                    cv_mean = -cv_scores.mean()
+                    cv_std = cv_scores.std()
 
                 pipeline.fit(X_train, y_train)
 
@@ -2111,8 +2157,8 @@ if dataset_ready:
 
                 results.append({
                     "Model": model_name,
-                    "CV_RMSE_Mean": float(-cv_scores.mean()),
-                    "CV_RMSE_Std": float(cv_scores.std()),
+                    "CV_RMSE_Mean": float(cv_mean),
+                    "CV_RMSE_Std": float(cv_std),
                     "Train_RMSE": train_rmse,
                     "Validation_MSE": validation_mse,
                     "Validation_RMSE": validation_rmse,

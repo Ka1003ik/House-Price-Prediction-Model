@@ -1,10 +1,27 @@
+
+# ==========================================
+# Python environment and cache
+# ==========================================
 .venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Environment variables and secrets
+# ==========================================
 .env
 .env.*
 !.env.example
+
+# ==========================================
+# Logs and temporary files
+# ==========================================
 *.log
 *.tmp
 *.temp
@@ -12,26 +29,25 @@ __pycache__/
 *.swp
 .DS_Store
 Thumbs.db
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 
-# Generated machine learning models
-models/*.joblib
-!models/best_house_price_model.joblib
-!models/linear_regression_streamlit.joblib
-!models/decision_tree_streamlit.joblib
-!models/random_forest_streamlit.joblib
-!models/training_artifacts.joblib
+# ==========================================
+# Generated machine learning model artifacts
+# ==========================================
+/models/*.joblib
+/models/best_model_metadata.json
+/models/datasets/
 
+# ==========================================
 # Local testing and backup files
+# ==========================================
 models_test_hold/
+app_backup*.py
+app_backup*.py.py
 app_backup_before_dataset_storage.py
 app_backup_before_recovery.py.py
 dataset/uci_invalid_test.xlsx
 
-# Archived Ames model backup
+# ==========================================
+# Archived model backups
+# ==========================================
 models/ames_housing_backup/
-
-# Generated dataset-specific model artifacts
-models/datasets/

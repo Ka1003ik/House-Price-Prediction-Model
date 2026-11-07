@@ -13,6 +13,7 @@
     "target_display_name": "House Price per Unit Area",
     "target_unit": "10,000 TWD / Ping",
     "categorical_columns": [],
+    "excluded_feature_columns": [],
     "validation_percentage": 20.0,
     "cv_folds": 5,
     "random_state": 42,
