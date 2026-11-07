@@ -1,78 +1,237 @@
-# Universal House Price Prediction System
+# 🏡 House Price Prediction System
 
-An end-to-end machine learning project for house price prediction, featuring data preprocessing, model training, hyperparameter tuning, model evaluation, explainability, and interactive predictions through a Streamlit web application.
+An end-to-end **Machine Learning application** built with Python and Streamlit to analyze datasets, preprocess features, train and compare regression models, optimize hyperparameters, and generate house price predictions through an interactive interface.
 
-## Overview
+The application is designed with a reusable machine learning pipeline that supports automated feature detection, model evaluation, explainability, and individual or batch predictions.
 
-The Universal House Price Prediction System is a machine learning application designed to develop, evaluate, and interpret regression models for predicting residential property prices.
+---
 
-The project implements a reusable preprocessing and modelling pipeline, supports multiple regression algorithms, provides model evaluation and explainability tools, and offers an interactive interface for dataset exploration and price prediction.
+## 📌 Project Overview
 
-The primary project workflow uses the Ames Housing dataset, while a separate feature-ablation experiment evaluates the effect of excluding a predictor from the Boston Housing dataset.
+House price prediction is a regression problem that involves estimating property values based on relevant features.
 
-## Key Features
+This project implements a complete machine learning workflow, covering:
 
-- **Data Preprocessing:** Handles missing values, categorical variables, numerical features, and feature transformations.
-- **Automatic Feature Detection:** Identifies numerical and categorical input features.
-- **Data Quality Analysis:** Examines missing values, duplicate records, and target validity.
-- **Model Training:** Supports multiple regression algorithms.
-- **Model Comparison:** Evaluates models using standard regression metrics.
-- **Hyperparameter Tuning:** Supports parameter optimization for model performance improvement.
-- **Model Explainability:** Uses permutation feature importance and SHAP-based explanations.
-- **Prediction Validation:** Validates prediction inputs and handles invalid numerical values.
-- **Interactive Web Application:** Provides dataset exploration, model training, analytics, explainability, and prediction through Streamlit.
-- **Reusable Pipeline:** Organizes preprocessing, training, tuning, prediction, and explainability into modular Python components.
+- Dataset upload and exploration
+- Automatic numerical and categorical feature detection
+- Data preprocessing and feature transformation
+- Regression model training and comparison
+- Hyperparameter optimization
+- Model evaluation and validation
+- Feature importance and model explainability
+- Individual and batch predictions
 
-## Technologies Used
+The application provides an interactive interface through Streamlit, making the machine learning workflow accessible without requiring users to execute individual Python scripts.
+
+## 🎯 Project Objectives
+
+- Develop a reusable end-to-end regression pipeline.
+- Automate feature identification and preprocessing.
+- Compare multiple regression algorithms.
+- Improve model performance through hyperparameter tuning.
+- Evaluate models using appropriate regression metrics.
+- Interpret model predictions using explainability techniques.
+- Provide an interactive prediction interface.
+
+## 📊 Dataset
+
+**Primary Dataset:** UCI Real Estate Valuation Dataset
+
+**Source:** [UCI Machine Learning Repository – Real Estate Valuation](https://archive.ics.uci.edu/dataset/477/real+estate+valuation+data+set)
+
+Dataset characteristics:
+
+| Attribute | Details |
+|---|---|
+| Total records | 414 |
+| Original columns | 8 |
+| Predictor features | 6 |
+| Target variable | House price of unit area |
+| Problem type | Supervised Regression |
+
+### Features
+
+| Feature | Description |
+|---|---|
+| X1 | Transaction date |
+| X2 | House age |
+| X3 | Distance to the nearest MRT station |
+| X4 | Number of convenience stores |
+| X5 | Latitude |
+| X6 | Longitude |
+| Y | House price of unit area |
+
+The dataset's record identifier is excluded from the predictor features.
+
+## ⚙️ Machine Learning Workflow
+
+### 1. Data Collection and Exploration
+- Load datasets for analysis.
+- Inspect dataset dimensions and structure.
+- Examine data types and missing values.
+- Explore numerical and categorical variables.
+- Analyze target variable distribution.
+
+### 2. Automatic Feature Detection
+- Identify numerical features.
+- Identify categorical features.
+- Allow numerical columns to be treated as categorical when appropriate.
+- Configure feature handling for preprocessing.
+
+### 3. Data Preprocessing
+- Handle missing values.
+- Apply appropriate transformations to numerical features.
+- Encode categorical variables.
+- Prepare training and validation datasets.
+- Build a reusable preprocessing pipeline.
+
+### 4. Model Training
+
+The application compares three regression algorithms:
+
+| Algorithm | Model |
+|---|---|
+| Linear Regression | Baseline regression model |
+| Decision Tree Regressor | Tree-based regression |
+| Random Forest Regressor | Ensemble regression |
+
+### 5. Hyperparameter Optimization
+
+`RandomizedSearchCV` is used to optimize Decision Tree and Random Forest models.
+
+The tuning process explores different combinations of model parameters using cross-validation and negative Root Mean Squared Error (RMSE) as the scoring metric.
+
+The best-performing estimator is selected for subsequent evaluation.
+
+### 6. Model Evaluation
+
+The models are evaluated using:
+
+- Cross-Validation RMSE
+- Training RMSE
+- Validation Mean Squared Error (MSE)
+- Validation RMSE
+- Validation R² Score
+
+These metrics help compare model performance and assess generalization.
+
+### 7. Model Explainability
+
+The application incorporates model explainability techniques to understand feature contributions.
+
+- Feature importance analysis
+- SHAP-based explainability
+- Interpretation of influential predictors
+
+### 8. Prediction
+
+The application supports:
+
+- Individual house price prediction
+- Batch predictions using uploaded input files
+- Prediction outputs for further analysis
+
+---
+
+## 📈 Model Performance
+
+The following results were obtained during hyperparameter tuning on the UCI Real Estate Valuation dataset.
+
+### Cross-Validation Results
+
+| Model | CV RMSE Mean | CV RMSE Std |
+|---|---:|---:|
+| Linear Regression | 9.1790 | 1.4189 |
+| Decision Tree | 8.2600 | 1.5990 |
+| Random Forest | **7.6014** | 1.5993 |
+
+### Random Forest Validation Results
+
+| Metric | Result |
+|---|---:|
+| Training RMSE | 4.7329 |
+| Validation MSE | 27.8772 |
+| Validation RMSE | 5.28 |
+| Validation R² | 0.8338 |
+
+**Observation:** Random Forest achieved the lowest cross-validation RMSE among the three evaluated models and the strongest validation performance in this experiment.
+
+*Note: Results are specific to the dataset, preprocessing configuration, random seed, and validation split used during the experiment. They are not guarantees of performance on other datasets.*
+
+---
+
+## 🖥️ Application Features
+
+- Interactive Streamlit dashboard
+- Dataset upload and exploration
+- Automatic feature detection
+- Configurable preprocessing
+- Multiple regression model comparison
+- Hyperparameter tuning
+- Model evaluation and visualization
+- SHAP explainability
+- Feature importance analysis
+- Individual predictions
+- Batch prediction support
+- Dataset-specific model artifact storage
+
+## 🛠️ Technology Stack
 
 | Category | Technologies |
 |---|---|
 | Programming Language | Python |
-| Data Analysis | Pandas, NumPy |
+| Application Framework | Streamlit |
+| Data Manipulation | Pandas, NumPy |
 | Machine Learning | Scikit-learn |
 | Model Explainability | SHAP |
 | Data Visualization | Matplotlib, Seaborn |
 | Model Serialization | Joblib |
-| Web Application | Streamlit |
-| Excel Support | OpenPyXL, xlrd |
+| Dataset Support | CSV, Excel |
+| Development Environment | VS Code, Jupyter Notebook |
+| Version Control | Git, GitHub |
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 House-Price-Prediction-Model/
 │
 ├── app.py
-├── requirements.txt
-├── README.md
-├── EXPERIMENT_COMPARISON.md
-├── .gitignore
+│
+├── src/
+│   ├── explainability.py
+│   ├── generic_pipeline.py
+│   ├── model_training.py
+│   ├── model_tuning.py
+│   ├── prediction.py
+│   └── preprocessing.py
 │
 ├── dataset/
+│   ├── uci_real_estate/
 │   ├── train.csv
 │   ├── test.csv
-│   ├── data_description.txt
-│   └── sample_submission.csv
+│   └── data_description.txt
 │
 ├── models/
-│   ├── best_house_price_model.joblib
-│   └── best_model_metadata.json
+│   ├── active_model.json
+│   └── datasets/
 │
 ├── notebooks/
-│   └── Data analysis and machine learning workflow scripts
 │
 ├── outputs/
-│   └── Evaluation results, visualizations, and prediction files
 │
-└── src/
-    ├── preprocessing.py
-    ├── generic_pipeline.py
-    ├── model_training.py
-    ├── model_tuning.py
-    ├── prediction.py
-    └── explainability.py
+├── requirements.txt
+├── .gitignore
+├── README.md
+└── EXPERIMENT_COMPARISON.md
 ```
 
-## Installation and Setup
+## 🚀 Installation and Setup
+
+### Prerequisites
+
+- Python 3.10 or later
+- Git
+- Visual Studio Code (recommended)
 
 ### 1. Clone the Repository
 
@@ -92,125 +251,53 @@ cd House-Price-Prediction-Model
 python -m venv .venv
 ```
 
-### 4. Activate the Virtual Environment
+### 4. Activate the Environment
 
 **Windows PowerShell:**
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 ```
 
 ### 5. Install Dependencies
 
 ```bash
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-## Run the Application
-
-Start the Streamlit application using:
+### 6. Run the Streamlit Application
 
 ```bash
 streamlit run app.py
 ```
 
-The application will open in your default browser. If it does not, use the local URL displayed in the terminal.
+The application will open in your browser at the local Streamlit address.
 
-## Model Evaluation
+## 🔍 Future Enhancements
 
-The project uses the following regression evaluation metrics:
+- Integration of additional regression algorithms.
+- Advanced feature engineering.
+- Automated model selection.
+- Improved prediction monitoring and reporting.
+- Model deployment through cloud platforms.
+- Expanded dataset support and validation.
 
-- **Mean Absolute Error (MAE):** Measures the average absolute prediction error.
-- **Mean Squared Error (MSE):** Measures the average squared prediction error.
-- **Root Mean Squared Error (RMSE):** Measures prediction error in the target variable's original unit.
-- **R-squared (R²):** Measures the proportion of target variance explained by the model.
+## 👨‍💻 Author
 
-These metrics provide a consistent basis for comparing regression model performance.
-
-## Boston Housing Dataset: Feature Ablation Experiment
-
-A separate experiment was conducted using the Boston Housing dataset to examine the effect of excluding `Feature_12 (B)` from the model inputs.
-
-### Experimental Setup
-
-- **Dataset records:** 506
-- **Target variable:** `Feature_14` (Median House Value, Thousand USD)
-- **Predictor features:** 13 (`Feature_1` through `Feature_13`)
-- **Experiment 1:** All 13 input features included.
-- **Experiment 2:** `Feature_12` excluded, retaining 12 input features.
-- **Models evaluated:** Linear Regression, Decision Tree, and Random Forest.
-- **Validation:** The same reported validation setup was used for both experiments.
-
-### Best-Model Comparison
-
-| Metric | With Feature_12 | Without Feature_12 |
-|---|---:|---:|
-| Best Model | Random Forest | Random Forest |
-| Cross-validation RMSE | 3.8542 | 3.8647 |
-| Validation RMSE | 2.9671 | 2.9495 |
-| Validation MAE | 2.0674 | 2.0244 |
-| Validation R² | 0.8799 | 0.8814 |
-
-*RMSE and MAE are expressed in Thousand USD.*
-
-### Experiment 2: Model-Level Validation Results
-
-| Model | Validation RMSE | Validation MAE | Validation R² |
-|---|---:|---:|---:|
-| Linear Regression | 4.8144 | 3.2112 | 0.6839 |
-| Decision Tree | 4.6083 | 2.6578 | 0.7104 |
-| Random Forest | 2.9495 | 2.0244 | 0.8814 |
-
-### Interpretation
-
-Random Forest achieved the best validation performance in both experiments.
-
-After excluding `Feature_12`, Random Forest validation RMSE decreased from 2.9671 to 2.9495 Thousand USD, while validation MAE decreased from 2.0674 to 2.0244 Thousand USD. Validation R² increased from 0.8799 to 0.8814.
-
-Cross-validation RMSE increased slightly from 3.8542 to 3.8647 Thousand USD.
-
-The differences are marginal and do not establish a statistically significant improvement. The results indicate that excluding `Feature_12` did not materially harm Random Forest validation performance in this experiment. The impact was model-dependent, as Decision Tree performance was worse in Experiment 2.
-
-**Responsible Machine Learning Consideration:** The original Boston Housing variable `B` is derived from historical racial composition data. Excluding this variable is relevant to responsible machine learning. However, removing a single feature does not guarantee fairness or eliminate proxy discrimination.
-
-For the detailed experiment comparison, refer to [EXPERIMENT_COMPARISON.md](EXPERIMENT_COMPARISON.md).
-
-## Dataset Information
-
-### Ames Housing Dataset
-
-The primary dataset used in the project is the Ames Housing training dataset from the Kaggle House Prices: Advanced Regression Techniques competition.
-
-- **Records:** 1,460
-- **Total columns:** 81
-- **Target variable:** `SalePrice`
-- **Identifier column:** `Id`
-- **Input features:** 79, excluding the identifier and target.
-
-Dataset source: [Kaggle – House Prices: Advanced Regression Techniques](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data)
-
-### Boston Housing Dataset
-
-Used separately for the feature-ablation experiment described in this README.
-
-- **Records:** 506
-- **Predictor features:** 13
-- **Target:** Median House Value (`MEDV`), represented in the application as `Feature_14`.
-
-## Project Objectives
-
-1. Develop a structured machine learning workflow for house price prediction.
-2. Implement reusable preprocessing and model training pipelines.
-3. Compare and optimize regression algorithms.
-4. Evaluate model performance using appropriate metrics.
-5. Interpret predictions using model explainability techniques.
-6. Investigate the impact of feature exclusion on model performance.
-7. Develop an interactive application for practical house price prediction.
-
-## Author
-
-**Kaushik K A**
+**K A Kaushik**
 
 B.Tech – Artificial Intelligence and Data Science
 
-GitHub: [Ka1003ik](https://github.com/Ka1003ik)
+Interested in Data Science, Machine Learning, Predictive Analytics, and building practical AI-driven applications.
+
+- GitHub: [@Ka1003ik](https://github.com/Ka1003ik)
+
+---
+
+## 📜 License
+
+This project is developed for educational and portfolio purposes.
+
+---
+
+**If you find this project useful, consider giving the repository a ⭐ on GitHub.**
