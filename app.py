@@ -829,6 +829,8 @@ def get_saved_model_details():
     if not isinstance(saved_metadata.get("target_column"), str):
         raise ValueError("Invalid target column in metadata.")
 
+    # Normalize Windows paths for Linux deployment.
+    model_file = model_file.replace("\\", "/")
     candidate_model_path = Path(model_file).expanduser()
 
     if not candidate_model_path.is_absolute():
