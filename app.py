@@ -1,5 +1,3 @@
-print("[STARTUP 00] app.py execution started", flush=True)
-
 import hashlib
 import csv
 import io
@@ -8,49 +6,39 @@ import re
 from pathlib import Path
 import json
 
-print("[STARTUP 01] Standard library imports completed", flush=True)
-
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-print("[STARTUP 02] Core third-party imports completed", flush=True)
-
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r2_score,
 )
+
 from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
     RandomizedSearchCV,
 )
-print("[STARTUP 03] Scikit-learn imports completed", flush=True)
 
 from src.generic_pipeline import (
     build_generic_pipeline,
     prepare_features_target,
 )
 
-print("[STARTUP 04] Generic pipeline import completed", flush=True)
-
 from src.explainability import (
     calculate_permutation_importance,
     calculate_shap_values
 )
-
-print("[STARTUP 05] Explainability import completed", flush=True)
 
 from src.prediction import (
     load_prediction_pipeline,
     predict_house_prices,
     prepare_prediction_features,
 )
-
-print("[STARTUP 06] Prediction import completed", flush=True)
 
 # Project paths are initialized before the workflow so Section 12 can
 # validate a previously saved model even when no training dataset is uploaded.
@@ -141,7 +129,6 @@ MODEL_DIR, ACTIVE_MODEL_STORAGE_KEY, ACTIVE_MODEL_DISPLAY_NAME = (
 )
 TRAINING_ARTIFACTS_PATH = MODEL_DIR / "training_artifacts.joblib"
 
-print("[STARTUP 07] Model paths initialized", flush=True)
 
 # ==================================================
 # HELPER FUNCTIONS
@@ -901,8 +888,6 @@ st.set_page_config(
     layout="wide",
 )
 
-print("[STARTUP 08] Streamlit page configuration completed", flush=True)
-
 # Check saved model availability before rendering sidebar navigation.
 saved_model_details = None
 model_validation_error = None
@@ -924,14 +909,6 @@ if "training_results" not in st.session_state:
     training_artifacts_restored, training_artifact_restore_error = (
         restore_training_artifacts()
     )
-
-print(
-    "[STARTUP 10] Training-artifact restoration completed | Restored:",
-    training_artifacts_restored,
-    "| Error:",
-    training_artifact_restore_error,
-    flush=True,
-)
 
 if saved_model_available:
     active_metadata = saved_model_details["metadata"]
@@ -1308,8 +1285,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-print("[STARTUP 11] Application CSS rendered", flush=True)
 
 st.sidebar.markdown(
     """
@@ -3560,5 +3535,3 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-print("[STARTUP 12] App execution reached the end", flush=True)
