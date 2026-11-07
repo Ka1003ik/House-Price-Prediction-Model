@@ -23,6 +23,12 @@ This project implements a complete machine learning workflow, covering:
 
 The application provides an interactive interface through Streamlit, making the machine learning workflow accessible without requiring users to execute individual Python scripts.
 
+## 🚀 Live Demo
+
+Experience the Universal House Price Prediction System:
+
+🔗 [Launch Live Application](https://universal-house-price-predictor.streamlit.app/)
+
 ## 🎯 Project Objectives
 
 - Develop a reusable end-to-end regression pipeline.
