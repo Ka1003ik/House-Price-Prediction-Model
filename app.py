@@ -1,4 +1,5 @@
 import hashlib
+import csv
 import io
 import os
 import re
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+
 
 from sklearn.metrics import (
     mean_absolute_error,
@@ -60,8 +62,14 @@ def load_active_model_location():
         return MODELS_ROOT, "legacy_root", "Legacy model folder"
 
 
-def dataset_storage_location(dataset_name, dataset_signature, target_column, feature_columns):
-    """Return an isolated model directory for a dataset and target."""
+def dataset_storage_location(
+    dataset_name,
+    dataset_signature,
+    target_column,
+    feature_columns,
+    excluded_feature_columns=None,
+):
+    """Return an isolated model directory for a dataset experiment."""
     # Keep the original Ames artifacts usable in their current root location.
     # The legacy directory is selected only when its metadata identifies the
     # same uploaded filename and target; new datasets never write into it.
@@ -82,8 +90,15 @@ def dataset_storage_location(dataset_name, dataset_signature, target_column, fea
 
     stem = Path(dataset_name).stem.lower()
     slug = re.sub(r"[^a-z0-9]+", "_", stem).strip("_")[:40] or "dataset"
-    identity = f"{dataset_signature}:{target_column}".encode("utf-8")
-    short_hash = hashlib.sha256(identity).hexdigest()[:12]
+    identity_text = f"{dataset_signature}:{target_column}"
+    excluded_feature_columns = list(excluded_feature_columns or [])
+    if excluded_feature_columns:
+        # Keep the original baseline workspace unchanged, while assigning
+        # each feature-exclusion experiment its own persistent model folder.
+        identity_text += ":excluded:" + json.dumps(
+            sorted(excluded_feature_columns), separators=(",", ":")
+        )
+    short_hash = hashlib.sha256(identity_text.encode("utf-8")).hexdigest()[:12]
     storage_key = f"{slug}_{short_hash}"
     return MODELS_ROOT / "datasets" / storage_key, storage_key
 
@@ -114,37 +129,216 @@ TRAINING_ARTIFACTS_PATH = MODEL_DIR / "training_artifacts.joblib"
 # ==================================================
 
 
+
 def load_uploaded_dataset(uploaded_file):
-    """Load CSV/Excel data and preserve known Ames absence categories."""
+    """Load CSV/Excel files with delimiter detection and preserve Ames handling."""
     file_bytes = uploaded_file.getvalue()
     file_name = uploaded_file.name.lower()
 
     if file_name.endswith(".csv"):
-        data = pd.read_csv(
-            io.BytesIO(file_bytes),
-            keep_default_na=False,
-            na_values=[""],
-        )
-    else:
+        try:
+            text = file_bytes.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = file_bytes.decode("cp1252")
+
+        # Detect standard delimiters using CSV Sniffer.
+        sample = text[:65536]
+        sniffed_delimiter = None
+
+        try:
+            sniffed_delimiter = csv.Sniffer().sniff(
+                sample, delimiters=",;\t|"
+            ).delimiter
+        except csv.Error:
+            pass
+
+        # Validate candidate delimiters across all non-empty rows.
+        valid_delimiters = {}
+
+        for delimiter in [",", ";", "\t", "|"]:
+            try:
+                rows = list(
+                    csv.reader(
+                        io.StringIO(text, newline=""),
+                        delimiter=delimiter,
+                        strict=True,
+                    )
+                )
+            except csv.Error:
+                continue
+
+            rows = [
+                row for row in rows
+                if any(cell.strip() for cell in row)
+            ]
+            widths = [len(row) for row in rows]
+
+            if (
+                len(rows) >= 2
+                and len(set(widths)) == 1
+                and widths[0] > 1
+            ):
+                valid_delimiters[delimiter] = widths[0]
+
+        if sniffed_delimiter in valid_delimiters:
+            separator = sniffed_delimiter
+
+        elif valid_delimiters:
+            separator = max(
+                valid_delimiters,
+                key=valid_delimiters.get,
+            )
+
+        else:
+            # Fallback for multiple-space/whitespace-separated files.
+            whitespace_rows = [
+                line.split()
+                for line in text.splitlines()
+                if line.strip()
+            ]
+            whitespace_widths = [
+                len(row) for row in whitespace_rows
+            ]
+
+            if (
+                len(whitespace_rows) >= 2
+                and len(set(whitespace_widths)) == 1
+                and whitespace_widths[0] > 1
+            ):
+                separator = r"\s+"
+            else:
+                raise ValueError(
+                    "Unable to detect a supported delimiter "
+                    "(comma, semicolon, tab, pipe or whitespace), "
+                    "or the file contains inconsistent row lengths."
+                )
+
+        # Parse without consuming the first row as a header.
+        if separator == r"\s+":
+            raw_data = pd.read_csv(
+                io.StringIO(text),
+                sep=separator,
+                engine="python",
+                header=None,
+                keep_default_na=False,
+                na_values=[""],
+                on_bad_lines="error",
+            )
+        else:
+            raw_data = pd.read_csv(
+                io.StringIO(text),
+                sep=separator,
+                header=None,
+                keep_default_na=False,
+                na_values=[""],
+                on_bad_lines="error",
+            )
+
+        if raw_data.empty or raw_data.shape[1] < 2:
+            raise ValueError(
+                "The CSV must contain at least two columns and one data row."
+            )
+
+        # Conservative automatic header detection.
+        # Numeric first rows are treated as data, not headers.
+        if len(raw_data) > 1:
+            body_sample = raw_data.iloc[
+                1:min(len(raw_data), 51)
+            ]
+            header_evidence = []
+
+            for position in range(raw_data.shape[1]):
+                body_values = (
+                    body_sample.iloc[:, position]
+                    .astype(str)
+                    .str.strip()
+                )
+
+                numeric_ratio = pd.to_numeric(
+                    body_values,
+                    errors="coerce",
+                ).notna().mean()
+
+                if numeric_ratio >= 0.80:
+                    first_value = str(
+                        raw_data.iat[0, position]
+                    ).strip()
+
+                    first_is_numeric = pd.notna(
+                        pd.to_numeric(
+                            first_value,
+                            errors="coerce",
+                        )
+                    )
+
+                    header_evidence.append(not first_is_numeric)
+
+            has_header = (
+                bool(header_evidence)
+                and sum(header_evidence) / len(header_evidence) >= 0.50
+            )
+        else:
+            has_header = False
+
+        if has_header:
+            column_names = [
+                str(value).strip()
+                for value in raw_data.iloc[0].tolist()
+            ]
+
+            column_names = [
+                name if name else f"Feature_{index + 1}"
+                for index, name in enumerate(column_names)
+            ]
+
+            data = raw_data.iloc[1:].copy()
+            data.columns = column_names
+
+        else:
+            data = raw_data.copy()
+            data.columns = [
+                f"Feature_{index + 1}"
+                for index in range(data.shape[1])
+            ]
+
+        # Restore numeric data types after removing a textual header.
+        for column in data.columns:
+            original_nonmissing = data[column].notna()
+            converted = pd.to_numeric(
+                data[column],
+                errors="coerce",
+            )
+
+            if (
+                original_nonmissing.any()
+                and converted[original_nonmissing].notna().all()
+            ):
+                data[column] = converted
+
+    elif file_name.endswith((".xlsx", ".xls")):
+        # Preserve existing Excel loading functionality.
         data = pd.read_excel(
             io.BytesIO(file_bytes),
             keep_default_na=False,
             na_values=[""],
         )
 
-    # Recognize the commonly used Ames Housing training dataset by
-    # several characteristic columns, not by its filename alone.
+    else:
+        raise ValueError(
+            "Unsupported file format. Please upload CSV or Excel."
+        )
+
+    # Preserve existing Ames Housing recognition.
     ames_markers = {
         "SalePrice",
         "MSSubClass",
         "Neighborhood",
         "LotFrontage",
     }
+
     is_ames_dataset = ames_markers.issubset(set(data.columns))
 
     if is_ames_dataset:
-        # In these columns, the literal NA means that the property
-        # does not have that feature. Preserve it as an explicit category.
         absence_columns = [
             "Alley",
             "BsmtQual",
@@ -166,33 +360,50 @@ def load_uploaded_dataset(uploaded_file):
             if column in data.columns:
                 data[column] = data[column].replace("NA", "None")
 
-        # For MasVnrType, NA represents unknown information rather
-        # than the absence category, so keep it genuinely missing.
         if "MasVnrType" in data.columns:
             data["MasVnrType"] = data["MasVnrType"].replace(
                 "NA", np.nan
             )
 
-        # These numeric fields may be read as object columns when
-        # blanks are present. Convert them explicitly.
-        for column in ["MasVnrArea", "GarageYrBlt", "LotFrontage"]:
+        for column in [
+            "MasVnrArea",
+            "GarageYrBlt",
+            "LotFrontage",
+        ]:
             if column in data.columns:
                 data[column] = pd.to_numeric(
-                    data[column], errors="coerce"
+                    data[column],
+                    errors="coerce",
                 )
+
     else:
-        # For general datasets, interpret common text sentinels as
-        # missing values. Ames absence values were handled above.
-        missing_tokens = ["NA", "N/A", "n/a", "null", "NULL", "NaN", "nan"]
+        missing_tokens = [
+            "NA", "N/A", "n/a", "null", "NULL", "NaN", "nan"
+        ]
+
         object_columns = data.select_dtypes(
             include=["object", "string"]
         ).columns
+
         for column in object_columns:
             data[column] = data[column].replace(
-                missing_tokens, np.nan
+                missing_tokens,
+                np.nan,
             )
 
+    if data.empty:
+        raise ValueError(
+            "The uploaded dataset contains no data rows after header handling."
+        )
+
+    if not data.columns.is_unique:
+        raise ValueError(
+            "The dataset contains duplicate column names. "
+            "Please rename them and upload again."
+        )
+
     return data, is_ames_dataset
+
 
 
 def infer_target_display_config(target_column, dataset_name="", columns=None):
@@ -1205,10 +1416,30 @@ if dataset_ready:
         options=id_options,
     )
 
+    exclusion_widget_hash = hashlib.sha256(
+        f"{dataset_signature}:{target_column}".encode("utf-8")
+    ).hexdigest()[:12]
+    exclusion_options = [
+        column for column in id_options if column not in id_columns
+    ]
+    excluded_feature_columns = st.multiselect(
+        "Exclude selected input features from model training",
+        options=exclusion_options,
+        key=f"excluded_features_{exclusion_widget_hash}",
+        help=(
+            "Selected columns are removed from model inputs and predictions. "
+            "They remain in the uploaded dataset for data-quality inspection."
+        ),
+    )
+
     feature_columns = [
         column
         for column in df.columns
-        if column != target_column and column not in id_columns
+        if (
+            column != target_column
+            and column not in id_columns
+            and column not in excluded_feature_columns
+        )
     ]
 
     X_preview = df[feature_columns]
@@ -1240,6 +1471,7 @@ if dataset_ready:
         dataset_signature,
         target_column,
         feature_columns,
+        excluded_feature_columns=excluded_feature_columns,
     )
     current_storage_key = st.session_state.get(
         "_active_model_storage_key", ACTIVE_MODEL_STORAGE_KEY
@@ -1419,10 +1651,11 @@ if dataset_ready:
 
     st.caption(f"Target display: {TARGET_DISPLAY_NAME} ({TARGET_UNIT})")
 
-    summary_col4, summary_col5 = st.columns(2)
+    summary_col4, summary_col5, summary_col6 = st.columns(3)
 
     summary_col4.metric("Numerical Features", len(numeric_columns))
     summary_col5.metric("Categorical Features", len(categorical_columns))
+    summary_col6.metric("Excluded Input Features", len(excluded_feature_columns))
 
     st.caption(
         f"Excluded identifiers: {', '.join(id_columns) if id_columns else 'None'}"
@@ -1431,6 +1664,10 @@ if dataset_ready:
     st.caption(
         f"Categorical overrides: "
         f"{', '.join(categorical_override) if categorical_override else 'None'}"
+    )
+    st.caption(
+        f"Excluded input features: "
+        f"{', '.join(excluded_feature_columns) if excluded_feature_columns else 'None'}"
     )
 
     st.success("Dataset configuration completed!")
@@ -1719,6 +1956,7 @@ if dataset_ready:
         dataset_signature,
         target_column,
         tuple(id_columns),
+        tuple(excluded_feature_columns),
         tuple(categorical_override),
         int(test_size),
         int(cv_folds),
@@ -1774,7 +2012,7 @@ if dataset_ready:
             X, y = prepare_features_target(
                 df,
                 target_column=target_column,
-                id_columns=id_columns,
+                id_columns=list(id_columns) + list(excluded_feature_columns),
                 categorical_columns=categorical_override,
             )
 
@@ -1911,6 +2149,7 @@ if dataset_ready:
                 "target_display_name": TARGET_DISPLAY_NAME,
                 "target_unit": TARGET_UNIT,
                 "categorical_columns": list(categorical_override),
+                "excluded_feature_columns": list(excluded_feature_columns),
                 "validation_percentage": float(test_size),
                 "cv_folds": int(cv_folds),
                 "random_state": int(random_state),

@@ -32,3 +32,6 @@ dataset/uci_invalid_test.xlsx
 
 # Archived Ames model backup
 models/ames_housing_backup/
+
+# Generated dataset-specific model artifacts
+models/datasets/
